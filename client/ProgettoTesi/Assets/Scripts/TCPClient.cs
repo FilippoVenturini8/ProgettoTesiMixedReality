@@ -16,7 +16,7 @@ public class TCPClient : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        ConnectToTcpServer();
+        //ConnectToTcpServer();
     }
 
     // Update is called once per frame
