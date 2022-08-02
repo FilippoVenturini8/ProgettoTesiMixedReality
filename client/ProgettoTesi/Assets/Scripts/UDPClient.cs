@@ -13,37 +13,37 @@ public class UDPClient : MonoBehaviour
     private static int localPort;
    
     private string IP;
-    public int port;
+    public int sendingPort;
+    public int receivingPort;
    
     IPEndPoint remoteEndPoint;
     UdpClient client;
-   
-    /*// call it from shell (as program)
-    private static void Main()
-    {
-        UDPSend sendObj=new UDPSend();
+    UdpClient receiveClient;
 
-        sendObj.init();
-        sendObj.sendEndless(" endless infos \n");
-    }*/
+    Thread receiveThread;
+
+    public string lastReceivedUDPPacket="";
+    public string allReceivedUDPPackets="";
 
     void Start()
-    {
-        print("UDPSend.init()");
-       
+    {       
         IP="127.0.0.1";
-        port=10000;
+        sendingPort = 10000;
+        receivingPort=8051;
        
-        remoteEndPoint = new IPEndPoint(IPAddress.Parse(IP), port);
+        remoteEndPoint = new IPEndPoint(IPAddress.Parse(IP), sendingPort);
         client = new UdpClient();
-       
-        print("Sending to "+IP+" : "+port);
-        print("Testing: nc -lu "+IP+" : "+port);
+
+        receiveThread = new Thread(
+            new ThreadStart(ReceiveData));
+        receiveThread.IsBackground = true;
+        receiveThread.Start();
     }
 
     void Update()
     {
-        sendString("Prova UDP");
+        Vector3 cubePosition = GameObject.Find("Cube").transform.position;
+        //sendString(cubePosition.ToString());
     }
  
     private void sendString(string message)
@@ -59,17 +59,37 @@ public class UDPClient : MonoBehaviour
             print(err.ToString());
         }
     }
-   
-    private void sendEndless(string testStr)
+
+    private  void ReceiveData()
     {
-        do
+        receiveClient = new UdpClient(receivingPort);
+        while (true)
         {
-            sendString(testStr);           
+            try
+            {
+                IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
+                byte[] data = receiveClient.Receive(ref anyIP);
+                
+                string text = Encoding.UTF8.GetString(data);
+ 
+                print(">> " + data);
+               
+                lastReceivedUDPPacket=text;
+               
+                allReceivedUDPPackets=allReceivedUDPPackets+text;
+            }
+            catch (Exception err)
+            {
+                print(err.ToString());
+            }
         }
-        while(true);
-       
     }
    
+    public string getLatestUDPPacket()
+    {
+        allReceivedUDPPackets="";
+        return lastReceivedUDPPacket;
+    }
 }
  
  
