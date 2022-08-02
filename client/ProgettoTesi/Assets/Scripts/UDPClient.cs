@@ -25,8 +25,15 @@ public class UDPClient : MonoBehaviour
     public string lastReceivedUDPPacket="";
     public string allReceivedUDPPackets="";
 
+    private GameObject cube;
+
+    private float lastRotation;
+    private float rotationReceived;
+
     void Start()
-    {       
+    {      
+        cube = GameObject.Find("Cube");
+
         IP="127.0.0.1";
         sendingPort = 10000;
         receivingPort=8051;
@@ -42,7 +49,12 @@ public class UDPClient : MonoBehaviour
 
     void Update()
     {
-        Vector3 cubePosition = GameObject.Find("Cube").transform.position;
+        if(lastRotation != rotationReceived)
+        {
+            cube.transform.Rotate(rotationReceived,0,0);
+            lastRotation = rotationReceived;
+        }
+        //Vector3 cubePosition = GameObject.Find("Cube").transform.position;
         //sendString(cubePosition.ToString());
     }
  
@@ -72,7 +84,9 @@ public class UDPClient : MonoBehaviour
                 
                 string text = Encoding.UTF8.GetString(data);
  
-                print(">> " + data);
+                print(">> " + text);
+
+                rotationReceived = float.Parse(text);
                
                 lastReceivedUDPPacket=text;
                

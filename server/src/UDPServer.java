@@ -6,6 +6,10 @@ import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetSocket;
+import model.Cube;
+import model.Position;
+import model.Rotation;
+import model.Scale;
 
 public class UDPServer extends AbstractVerticle{
 
@@ -14,8 +18,12 @@ public class UDPServer extends AbstractVerticle{
 	
 	private DatagramSocket udpSocket;
 	
+	private Cube cube;
+	
 	@Override
     public void start() throws Exception {
+		this.initCube();
+		
 		Vertx vertx = Vertx.vertx();
         
 		udpSocket = vertx.createDatagramSocket(new DatagramSocketOptions().setIpV6(false).setReuseAddress(true));
@@ -36,7 +44,22 @@ public class UDPServer extends AbstractVerticle{
 	}
 	
 	public void send() {
-		udpSocket.send("PROVA DI SEND", 8051, SERVER_HOST);
+		this.rotateCube();
+		udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, SERVER_HOST);
+	}
+	
+	private void initCube() {
+		Position position = new Position(0,0,0);
+		Rotation rotation = new Rotation(0,0,0);
+		Scale scale = new Scale(0.2f, 0.2f, 0.2f);
+		
+		this.cube = new Cube(position, rotation, scale);
+	}
+	
+	private void rotateCube() {
+		Rotation oldRotation = this.cube.getRotation();
+		Rotation newRotation = new Rotation (oldRotation.getX()+1,oldRotation.getY(),oldRotation.getZ());
+		this.cube.setRotation(newRotation);
 	}
 	
 }
