@@ -9,5 +9,10 @@ public class RunService {
 		
 		UDPServer udpServer = new UDPServer();
 		udpServer.start();
+		
+		while(true) {
+			udpServer.send();
+			Thread.sleep(500);
+		}
 	}
 }
