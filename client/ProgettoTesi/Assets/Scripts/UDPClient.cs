@@ -58,11 +58,23 @@ public class UDPClient : MonoBehaviour, IDisposable
         instance = this;
     }
  
-    private void Start()
+    void Start()
     {
         Receive(8051);
         cube = GameObject.Find("Cube");
         InvokeRepeating("OnBtn_FreeMemory", 2, 5);
+    }
+    
+    void Update()
+    {
+        rotationReceived = float.Parse(messageReceived);
+        //print(messageReceived);
+        if(lastRotation != rotationReceived)
+        {
+            cube.transform.Rotate(rotationReceived,0,0);
+            lastRotation = rotationReceived;
+        }
+        //txtLog.text = messageReceived;
     }
     #endregion
  
@@ -212,24 +224,9 @@ public class UDPClient : MonoBehaviour, IDisposable
         Dispose();
     }
  
-    void Update()
-    {
-        rotationReceived = float.Parse(messageReceived);
-        //print(messageReceived);
-        if(lastRotation != rotationReceived)
-        {
-            cube.transform.Rotate(rotationReceived,0,0);
-            lastRotation = rotationReceived;
-        }
-        //txtLog.text = messageReceived;
-    }
- 
     private void OnDisable()
     {
         Dispose();
     }
  
 }
- 
- 
- 
