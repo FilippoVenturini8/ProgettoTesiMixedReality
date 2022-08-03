@@ -45,7 +45,9 @@ public class UDPServer extends AbstractVerticle{
 	
 	public void send() {
 		this.rotateCube();
-		udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, SERVER_HOST);
+		//udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, SERVER_HOST);
+		System.out.println("[UDP] Sending rotation: "+ Float.toString(this.cube.getRotation().getX()) +" to 192.168.40.102");
+		udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, "192.168.40.102");
 	}
 	
 	private void initCube() {
@@ -58,7 +60,7 @@ public class UDPServer extends AbstractVerticle{
 	
 	private void rotateCube() {
 		Rotation oldRotation = this.cube.getRotation();
-		Rotation newRotation = new Rotation (oldRotation.getX()+1,oldRotation.getY(),oldRotation.getZ());
+		Rotation newRotation = new Rotation (oldRotation.getX()+0.1f,oldRotation.getY(),oldRotation.getZ());
 		this.cube.setRotation(newRotation);
 	}
 	
