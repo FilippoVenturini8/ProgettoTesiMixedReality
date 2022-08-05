@@ -1,30 +1,41 @@
 using System;
+using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TCPClient : MonoBehaviour
 {
     #region private members 	
 	private TcpClient socketConnection; 	
-	private Thread clientReceiveThread; 	
+	private Thread clientReceiveThread; 
+
+    private GameObject debugGameObj;
+    private TextMeshProUGUI debugConsole;
+
+    private bool newLog = false;
+    private string logMsg;	
 	#endregion 
 
     // Start is called before the first frame update
     void Start()
     {
-        //ConnectToTcpServer();
+        debugGameObj = GameObject.Find("DebugTxt");
+        debugConsole = debugGameObj.GetComponent<TextMeshProUGUI>();
+        ConnectToTcpServer();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space)) {             
-			SendMessage();         
-		}
+        if(newLog){
+            debugConsole.text = logMsg;
+            newLog = false;
+        }
     }
 
     private void ConnectToTcpServer () 
@@ -42,7 +53,7 @@ public class TCPClient : MonoBehaviour
     private void ListenForData() 
     { 		
 		try { 			
-			socketConnection = new TcpClient("localhost", 10000);  			
+			socketConnection = new TcpClient("192.168.40.100", 10000);  			
 			Byte[] bytes = new Byte[1024];             
 			while (true) { 				
 				// Get a stream object for reading 				
@@ -53,7 +64,9 @@ public class TCPClient : MonoBehaviour
 						var incommingData = new byte[length]; 						
 						Array.Copy(bytes, 0, incommingData, 0, length); 						
 						// Convert byte array to string message. 						
-						string serverMessage = Encoding.ASCII.GetString(incommingData); 						
+						string serverMessage = Encoding.ASCII.GetString(incommingData); 
+                        NewLog("ARRIVATO");
+                        print("ARRIVATO"); 						
 						Debug.Log("server message received as: " + serverMessage); 					
 					} 				
 				} 			
@@ -85,4 +98,9 @@ public class TCPClient : MonoBehaviour
 			Debug.Log("Socket exception: " + socketException);         
 		}     
 	}
+
+    private void NewLog(string msg){
+        newLog = true;
+        logMsg = msg;
+    }
 }
