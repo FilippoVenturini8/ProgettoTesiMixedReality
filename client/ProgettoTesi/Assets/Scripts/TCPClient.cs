@@ -17,6 +17,10 @@ public class TCPClient : MonoBehaviour
     private GameObject debugGameObj;
     private TextMeshProUGUI debugConsole;
 
+	private GameObject cube;
+    private float rotationReceived;
+	private bool rotate = false;
+
     private bool newLog = false;
     private string logMsg;	
 	#endregion 
@@ -24,6 +28,7 @@ public class TCPClient : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+		cube = GameObject.Find("Cube");
         debugGameObj = GameObject.Find("DebugTxt");
         debugConsole = debugGameObj.GetComponent<TextMeshProUGUI>();
         ConnectToTcpServer();
@@ -35,6 +40,12 @@ public class TCPClient : MonoBehaviour
         if(newLog){
             debugConsole.text = logMsg;
             newLog = false;
+        }
+
+		if(rotate)
+        {            
+            cube.transform.Rotate(rotationReceived,0,0);
+            rotate = false;
         }
     }
 
@@ -65,8 +76,9 @@ public class TCPClient : MonoBehaviour
 						Array.Copy(bytes, 0, incommingData, 0, length); 						
 						// Convert byte array to string message. 						
 						string serverMessage = Encoding.ASCII.GetString(incommingData); 
-                        NewLog("ARRIVATO");
-                        print("ARRIVATO"); 						
+						rotationReceived = float.Parse(serverMessage);
+						rotate = true;
+                        NewLog(serverMessage);				
 						Debug.Log("server message received as: " + serverMessage); 					
 					} 				
 				} 			
