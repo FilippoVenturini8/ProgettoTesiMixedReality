@@ -14,11 +14,12 @@ import model.Scale;
 public class UDPServer extends AbstractVerticle{
 
 	private static final int SERVER_PORT = 10000;
-	private static final String SERVER_HOST = "127.0.0.1";
+	private static final String SERVER_HOST = "192.168.40.100";
 	
 	private DatagramSocket udpSocket;
 	
 	private Cube cube;
+	private boolean isConnected = false;
 	
 	@Override
     public void start() throws Exception {
@@ -35,7 +36,7 @@ public class UDPServer extends AbstractVerticle{
                 udpSocket.handler(packet -> {
                     String commandData = packet.data().getString(0, packet.data().length());
                     System.out.println("[UDP] Command received from "+packet.sender().host()+":"+packet.sender().port()+", length: "+packet.data().length()+", data: "+commandData);
-
+                    isConnected = true;
                 });
             } else {
             	System.out.println("[UDP] Server listen failed on "+SERVER_HOST+":"+SERVER_PORT+" - "+asyncResult.cause().toString());
@@ -44,10 +45,13 @@ public class UDPServer extends AbstractVerticle{
 	}
 	
 	public void send() {
+		if(!isConnected) {
+			return;
+		}
 		this.rotateCube();
 		//udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, SERVER_HOST);
 		System.out.println("[UDP] Sending rotation: "+ Float.toString(this.cube.getRotation().getX()) +" to 192.168.40.102");
-		udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, "192.168.40.102");
+		udpSocket.send(Float.toString(this.cube.getRotation().getX()), 1336, "192.168.40.102");
 	}
 	
 	private void initCube() {

@@ -18,20 +18,104 @@ using System.IO;
 using Windows.Networking;
 #endif
 
+#if !UNITY_EDITOR
 public class UDPClient : MonoBehaviour
 {
+
+    private string ClientPortNumber = "1336";
+    private string ServerPortNumber = "10000";
+
+    private GameObject debugGameObj;
+    private TextMeshProUGUI debugConsole;
+
+    private bool newLog = false;
+    private string logMsg;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        debugGameObj = GameObject.Find("DebugTxt");
+        debugConsole = debugGameObj.GetComponent<TextMeshProUGUI>();
+        StartClient();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if(newLog){
+            debugConsole.text = logMsg;
+            newLog = false;
+        }
+    }
+
+    private async void StartClient()
+    {
+        try
+        {
+            // Create the DatagramSocket and establish a connection to the echo server.
+            var clientDatagramSocket = new Windows.Networking.Sockets.DatagramSocket();
+
+            clientDatagramSocket.MessageReceived += ClientDatagramSocket_MessageReceived;
+
+            // The server hostname that we will be establishing a connection to. In this example, the server and client are in the same process.
+            var hostName = new Windows.Networking.HostName("192.168.40.100");
+
+            print("client is about to bind...");
+
+            await clientDatagramSocket.BindServiceNameAsync(ClientPortNumber);
+
+            print(string.Format("client is bound to port number {0}", ClientPortNumber));
+
+            // Send a request to the echo server.
+            string request = "Hello, World!";
+            using (var serverDatagramSocket = new Windows.Networking.Sockets.DatagramSocket())
+            {
+                using (Stream outputStream = (await serverDatagramSocket.GetOutputStreamAsync(hostName, ServerPortNumber)).AsStreamForWrite())
+                {
+                    using (var streamWriter = new StreamWriter(outputStream))
+                    {
+                        await streamWriter.WriteLineAsync(request);
+                        await streamWriter.FlushAsync();
+                    }
+                }
+            }
+
+            NewLog(string.Format("client sent the request: \"{0}\"", request));
+        }
+        catch (Exception ex)
+        {
+            Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
+            print(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : ex.Message);
+        }
+    }
+
+    private async void ClientDatagramSocket_MessageReceived(Windows.Networking.Sockets.DatagramSocket sender, Windows.Networking.Sockets.DatagramSocketMessageReceivedEventArgs args)
+    {
+        NewLog("RISPOSTA");
+        string response;
+        using (DataReader dataReader = args.GetDataReader())
+        {
+            response = dataReader.ReadString(dataReader.UnconsumedBufferLength).Trim();
+            NewLog(response);
+        }
+
+        //await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => NewLog(string.Format("client received the response: \"{0}\"", response)));
+
+        sender.Dispose();
+
+        //await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => NewLog("client closed its socket"));
+    }
+
+    private void NewLog(string msg){
+        newLog = true;
+        logMsg = msg;
     }
 }
+#endif
+
+
+
+
 
 /*
 

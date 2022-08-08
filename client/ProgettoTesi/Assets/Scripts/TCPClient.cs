@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-
+/*
 public class TCPClient : MonoBehaviour
 {
     #region private members 	
@@ -116,3 +116,4 @@ public class TCPClient : MonoBehaviour
         logMsg = msg;
     }
 }
+*/
