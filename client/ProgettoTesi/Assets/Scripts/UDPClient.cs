@@ -43,7 +43,7 @@ public class UDPClient : MonoBehaviour
     void Update()
     {
         if(newLog){
-            debugConsole.text = logMsg;
+            debugConsole.text += " " + logMsg;
             newLog = false;
         }
     }
@@ -60,11 +60,11 @@ public class UDPClient : MonoBehaviour
             // The server hostname that we will be establishing a connection to. In this example, the server and client are in the same process.
             var hostName = new Windows.Networking.HostName("192.168.40.100");
 
-            print("client is about to bind...");
+            //NewLog("client is about to bind...");
 
             await clientDatagramSocket.BindServiceNameAsync(ClientPortNumber);
 
-            print(string.Format("client is bound to port number {0}", ClientPortNumber));
+            //NewLog(string.Format("client is bound to port number {0}", ClientPortNumber));
 
             // Send a request to the echo server.
             string request = "Hello, World!";
@@ -80,12 +80,13 @@ public class UDPClient : MonoBehaviour
                 }
             }
 
-            NewLog(string.Format("client sent the request: \"{0}\"", request));
+            //NewLog(string.Format("client sent the request: \"{0}\"", request));
         }
         catch (Exception ex)
         {
             Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
             print(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : ex.Message);
+            NewLog("ERROR!");
         }
     }
 

@@ -1,4 +1,5 @@
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -20,6 +21,7 @@ public class UDPServer extends AbstractVerticle{
 	
 	private Cube cube;
 	private boolean isConnected = false;
+	private Future<Void> succeded;
 	
 	@Override
     public void start() throws Exception {
@@ -36,6 +38,7 @@ public class UDPServer extends AbstractVerticle{
                 udpSocket.handler(packet -> {
                     String commandData = packet.data().getString(0, packet.data().length());
                     System.out.println("[UDP] Command received from "+packet.sender().host()+":"+packet.sender().port()+", length: "+packet.data().length()+", data: "+commandData);
+                    succeded = udpSocket.send("RISPOSTONA", 1336, "192.168.40.102");
                     isConnected = true;
                 });
             } else {
@@ -49,9 +52,9 @@ public class UDPServer extends AbstractVerticle{
 			return;
 		}
 		this.rotateCube();
-		//udpSocket.send(Float.toString(this.cube.getRotation().getX()), 8051, SERVER_HOST);
-		System.out.println("[UDP] Sending rotation: "+ Float.toString(this.cube.getRotation().getX()) +" to 192.168.40.102");
-		udpSocket.send(Float.toString(this.cube.getRotation().getX()), 1336, "192.168.40.102");
+		System.out.println(succeded.succeeded());
+		//System.out.println("[UDP] Sending rotation: "+ Float.toString(this.cube.getRotation().getX()) +" to 192.168.40.102");
+		//udpSocket.send(Float.toString(this.cube.getRotation().getX()), 1336, "192.168.40.102");
 	}
 	
 	private void initCube() {
