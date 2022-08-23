@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-/*
+
 public class TCPClient : MonoBehaviour
 {
     #region private members 	
@@ -75,10 +75,14 @@ public class TCPClient : MonoBehaviour
 						var incommingData = new byte[length]; 						
 						Array.Copy(bytes, 0, incommingData, 0, length); 						
 						// Convert byte array to string message. 						
-						string serverMessage = Encoding.ASCII.GetString(incommingData); 
-						rotationReceived = float.Parse(serverMessage);
-						rotate = true;
-                        NewLog(serverMessage);				
+						string msgString = Encoding.ASCII.GetString(incommingData); 
+
+						Message serverMessage = Message.CreateFromJSON(msgString);
+						
+                        NewLog(serverMessage.rotation.ToString());	
+
+						rotationReceived = serverMessage.rotation;
+						rotate = true;			
 						Debug.Log("server message received as: " + serverMessage); 					
 					} 				
 				} 			
@@ -116,4 +120,21 @@ public class TCPClient : MonoBehaviour
         logMsg = msg;
     }
 }
-*/
+
+[System.Serializable]
+public class Message
+{
+    public float rotation;
+    public float scale;
+    public float position;
+
+    public static Message CreateFromJSON(string jsonString)
+    {
+        return JsonUtility.FromJson<Message>(jsonString);
+    }
+
+    // Given JSON input:
+    // {"name":"Dr Charles","lives":3,"health":0.8}
+    // this example will return a PlayerInfo object with
+    // name == "Dr Charles", lives == 3, and health == 0.8f.
+}

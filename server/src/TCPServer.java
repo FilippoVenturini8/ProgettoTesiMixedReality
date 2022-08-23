@@ -2,6 +2,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetSocket;
 import model.Cube;
@@ -62,11 +63,16 @@ public class TCPServer extends AbstractVerticle {
 		}
 		
 		this.rotateCube();
-		System.out.println("[TCP] Sending rotation: "+ Float.toString(this.cube.getRotation().getX()) +" to 192.168.40.102");
+		System.out.println("[TCP] Sending rotation: "+ DELTA_ROTATION +" to 192.168.40.102");
 		
-		Buffer outBuffer = Buffer.buffer();
-        outBuffer.appendString(Float.toString(DELTA_ROTATION));
-
+        JsonObject reqJo = new JsonObject();
+        reqJo.put("rotation", DELTA_ROTATION);
+        reqJo.put("position", 0.0f);
+        reqJo.put("scale", 0.0f);
+        
+        Buffer outBuffer = Buffer.buffer();
+        outBuffer.appendString(reqJo.toString());
+        
         netSocketProva.write(outBuffer);
 	}
 	
