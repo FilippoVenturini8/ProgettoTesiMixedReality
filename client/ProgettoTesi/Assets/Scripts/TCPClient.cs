@@ -18,16 +18,25 @@ public class TCPClient : MonoBehaviour
     private TextMeshProUGUI debugConsole;
 
 	private GameObject cube;
+	GameObject newCube;
+	GameObject newCube1;
     private float rotationReceived;
 	private bool rotate = false;
+	private bool create = false;
 
     private bool newLog = false;
     private string logMsg;	
+
+	private bool first = true;
 	#endregion 
 
     // Start is called before the first frame update
     void Start()
     {
+		newCube1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        newCube1.transform.position = new Vector3(0, 1.0f, 0);
+		newCube1.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+
 		cube = GameObject.Find("Cube");
         debugGameObj = GameObject.Find("DebugTxt");
         debugConsole = debugGameObj.GetComponent<TextMeshProUGUI>();
@@ -42,11 +51,24 @@ public class TCPClient : MonoBehaviour
             newLog = false;
         }
 
+		if(first && create)
+		{
+			first = false;
+			newCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        	newCube.transform.position = new Vector3(0, 0.5f, 0);
+			newCube.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+			NewLog("CREATO");
+		}
+
 		if(rotate)
         {            
             cube.transform.Rotate(rotationReceived,0,0);
+			if(!first)
+			{
+				newCube.transform.Rotate(0,rotationReceived,0);
+			}
             rotate = false;
-        }
+        }		
     }
 
     private void ConnectToTcpServer () 
@@ -79,10 +101,15 @@ public class TCPClient : MonoBehaviour
 
 						Message serverMessage = Message.CreateFromJSON(msgString);
 						
-                        NewLog(serverMessage.rotation.ToString());	
+                        NewLog(serverMessage.create.ToString());	
 
 						rotationReceived = serverMessage.rotation;
-						rotate = true;			
+						rotate = true;
+
+						if(first){
+							create = serverMessage.create;
+						}	
+
 						Debug.Log("server message received as: " + serverMessage); 					
 					} 				
 				} 			
@@ -127,6 +154,7 @@ public class Message
     public float rotation;
     public float scale;
     public float position;
+	public bool create;
 
     public static Message CreateFromJSON(string jsonString)
     {

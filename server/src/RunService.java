@@ -12,7 +12,7 @@ public class RunService {
 		while(true) {
 			//udpServer.send();
 			tcpServer.send();
-			Thread.sleep(50);
+			Thread.sleep(100);
 		}
 	}
 }

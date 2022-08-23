@@ -69,6 +69,7 @@ public class TCPServer extends AbstractVerticle {
         reqJo.put("rotation", DELTA_ROTATION);
         reqJo.put("position", 0.0f);
         reqJo.put("scale", 0.0f);
+        reqJo.put("create", true);
         
         Buffer outBuffer = Buffer.buffer();
         outBuffer.appendString(reqJo.toString());
