@@ -1,3 +1,6 @@
+import java.util.LinkedList;
+import java.util.List;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -11,15 +14,17 @@ import model.Rotation;
 import model.Scale;
 
 public class TCPServer extends AbstractVerticle {
-	private NetSocket netSocketProva;
-	private Cube cube;
+	private NetSocket serverNetSocket;
+	private List<Cube> cubes = new LinkedList<>();
 	private boolean isConnected = false;
 	
 	private static float DELTA_ROTATION = 0.5f;
+	private static int NUMBER_OF_CUBES = 5;
+	private static float SCALE = 0.2f;
 	
 	@Override
     public void start() throws Exception {
-		this.initCube();
+		this.initCubes();
 		
 		Vertx vertx = Vertx.vertx();
         NetServer server = vertx.createNetServer();
@@ -44,13 +49,23 @@ public class TCPServer extends AbstractVerticle {
                         netSocket.write(outBuffer);*/
                     }
                 });
-                netSocketProva = netSocket;
-                isConnected = true;
+                serverNetSocket = netSocket;
                 
-                /*Buffer outBuffer = Buffer.buffer();
-                outBuffer.appendString("CIAO");
+                JsonObject setupJo = new JsonObject();
+                setupJo.put("scale", SCALE);
+                setupJo.put("numberOfCube", NUMBER_OF_CUBES);
+                
+                Buffer outBuffer = Buffer.buffer();
+                outBuffer.appendString(setupJo.toString());
 
-                netSocket.write(outBuffer);*/
+                netSocket.write(outBuffer);
+                
+                try {
+					Thread.sleep(100);
+					isConnected = true;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
             }
         });
         server.listen(10000);
@@ -62,32 +77,32 @@ public class TCPServer extends AbstractVerticle {
 			return;
 		}
 		
-		this.rotateCube();
+		this.rotateCubes();
 		System.out.println("[TCP] Sending rotation: "+ DELTA_ROTATION +" to 192.168.40.102");
 		
         JsonObject reqJo = new JsonObject();
         reqJo.put("rotation", DELTA_ROTATION);
-        reqJo.put("position", 0.0f);
-        reqJo.put("scale", 0.0f);
-        reqJo.put("create", true);
         
         Buffer outBuffer = Buffer.buffer();
         outBuffer.appendString(reqJo.toString());
         
-        netSocketProva.write(outBuffer);
+        serverNetSocket.write(outBuffer);
 	}
 	
-	private void initCube() {
-		Position position = new Position(0,0,0);
-		Rotation rotation = new Rotation(0,0,0);
-		Scale scale = new Scale(0.2f, 0.2f, 0.2f);
-		
-		this.cube = new Cube(position, rotation, scale);
+	private void initCubes() {
+		for(int i= 0; i < NUMBER_OF_CUBES; i++) {
+			Position position = new Position(0,0,-(float)i);
+			Rotation rotation = new Rotation(0,0,0);
+			Scale scale = new Scale(SCALE, SCALE, SCALE);
+			cubes.add(new Cube(position, rotation, scale));
+		}
 	}
 	
-	private void rotateCube() {
-		Rotation oldRotation = this.cube.getRotation();
-		Rotation newRotation = new Rotation (oldRotation.getX()+DELTA_ROTATION,oldRotation.getY(),oldRotation.getZ());
-		this.cube.setRotation(newRotation);
+	private void rotateCubes() {
+		for(Cube cube : cubes){
+			Rotation oldRotation = cube.getRotation();
+			Rotation newRotation = new Rotation (oldRotation.getX()+DELTA_ROTATION,oldRotation.getY(),oldRotation.getZ());
+			cube.setRotation(newRotation);
+		}
 	}
 }

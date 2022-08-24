@@ -17,27 +17,21 @@ public class TCPClient : MonoBehaviour
     private GameObject debugGameObj;
     private TextMeshProUGUI debugConsole;
 
-	private GameObject cube;
-	GameObject newCube;
-	GameObject newCube1;
-    private float rotationReceived;
+	private List<GameObject> cubes = new List<GameObject>();
+	private SetupMessage setupMessage;
+	private Message serverMessage;
 	private bool rotate = false;
 	private bool create = false;
 
     private bool newLog = false;
     private string logMsg;	
 
-	private bool first = true;
+	private bool firstMsg = true;
 	#endregion 
 
     // Start is called before the first frame update
     void Start()
     {
-		newCube1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        newCube1.transform.position = new Vector3(0, 1.0f, 0);
-		newCube1.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-
-		cube = GameObject.Find("Cube");
         debugGameObj = GameObject.Find("DebugTxt");
         debugConsole = debugGameObj.GetComponent<TextMeshProUGUI>();
         ConnectToTcpServer();
@@ -51,21 +45,23 @@ public class TCPClient : MonoBehaviour
             newLog = false;
         }
 
-		if(first && create)
+		if(create)
 		{
-			first = false;
-			newCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        	newCube.transform.position = new Vector3(0, 0.5f, 0);
-			newCube.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-			NewLog("CREATO");
+			for(int i=0; i < setupMessage.numberOfCube; i++)
+			{
+				GameObject newCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				newCube.transform.position = new Vector3(0, 0, -(float)i);
+				newCube.transform.localScale = new Vector3(setupMessage.scale, setupMessage.scale, setupMessage.scale);
+				cubes.Add(newCube);
+			}
+			create = false;
 		}
 
 		if(rotate)
         {            
-            cube.transform.Rotate(rotationReceived,0,0);
-			if(!first)
+			foreach(GameObject cube in cubes)
 			{
-				newCube.transform.Rotate(0,rotationReceived,0);
+				cube.transform.Rotate(serverMessage.rotation,0,0);
 			}
             rotate = false;
         }		
@@ -98,18 +94,17 @@ public class TCPClient : MonoBehaviour
 						Array.Copy(bytes, 0, incommingData, 0, length); 						
 						// Convert byte array to string message. 						
 						string msgString = Encoding.ASCII.GetString(incommingData); 
+						NewLog(msgString);
+						if(firstMsg){
+							setupMessage = SetupMessage.CreateFromJSON(msgString);
+							create = true;
+							firstMsg = false;
+						}else{
+							serverMessage = Message.CreateFromJSON(msgString);	
 
-						Message serverMessage = Message.CreateFromJSON(msgString);
+							rotate = true;
+						}
 						
-                        NewLog(serverMessage.create.ToString());	
-
-						rotationReceived = serverMessage.rotation;
-						rotate = true;
-
-						if(first){
-							create = serverMessage.create;
-						}	
-
 						Debug.Log("server message received as: " + serverMessage); 					
 					} 				
 				} 			
@@ -149,20 +144,24 @@ public class TCPClient : MonoBehaviour
 }
 
 [System.Serializable]
+public class SetupMessage
+{
+    public float scale;
+	public int numberOfCube;
+
+    public static SetupMessage CreateFromJSON(string jsonString)
+    {
+        return JsonUtility.FromJson<SetupMessage>(jsonString);
+    }
+}
+
+[System.Serializable]
 public class Message
 {
     public float rotation;
-    public float scale;
-    public float position;
-	public bool create;
 
     public static Message CreateFromJSON(string jsonString)
     {
         return JsonUtility.FromJson<Message>(jsonString);
     }
-
-    // Given JSON input:
-    // {"name":"Dr Charles","lives":3,"health":0.8}
-    // this example will return a PlayerInfo object with
-    // name == "Dr Charles", lives == 3, and health == 0.8f.
 }
