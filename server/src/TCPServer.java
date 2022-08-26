@@ -1,3 +1,4 @@
+import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -5,6 +6,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetSocket;
@@ -78,14 +80,24 @@ public class TCPServer extends AbstractVerticle {
 		}
 		
 		this.rotateCubes();
-		System.out.println("[TCP] Sending rotation: "+ DELTA_ROTATION +" to 192.168.40.102");
+		System.out.println("[TCP] Sending rotation: packet to 192.168.40.102");
 		
-        JsonObject reqJo = new JsonObject();
-        reqJo.put("rotation", DELTA_ROTATION);
+		JsonArray packetJson = new JsonArray();
+		
+		for(Cube cube : cubes) {
+			JsonObject cubeJson = new JsonObject();
+			cubeJson.put("cubeID", cube.getId());
+			cubeJson.put("position", cube.getPosition().toString());
+			cubeJson.put("rotation", cube.getRotation().toString());
+			cubeJson.put("scale", cube.getScale().toString());
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			cubeJson.put("timestamp", timestamp.toString());
+			packetJson.add(cubeJson);
+		}
         
         Buffer outBuffer = Buffer.buffer();
-        outBuffer.appendString(reqJo.toString());
-        
+        outBuffer.appendString("{\"Items\":" + packetJson.toString() + "}");
+        System.out.println("{\"Items\":" + packetJson.toString() + "}");
         serverNetSocket.write(outBuffer);
 	}
 	
@@ -94,7 +106,7 @@ public class TCPServer extends AbstractVerticle {
 			Position position = new Position(0,0,-(float)i);
 			Rotation rotation = new Rotation(0,0,0);
 			Scale scale = new Scale(SCALE, SCALE, SCALE);
-			cubes.add(new Cube(position, rotation, scale));
+			cubes.add(new Cube(i, position, rotation, scale));
 		}
 	}
 	

@@ -38,7 +38,12 @@ public class UDPServer extends AbstractVerticle{
                 udpSocket.handler(packet -> {
                     String commandData = packet.data().getString(0, packet.data().length());
                     System.out.println("[UDP] Command received from "+packet.sender().host()+":"+packet.sender().port()+", length: "+packet.data().length()+", data: "+commandData);
-                    succeded = udpSocket.send("RISPOSTONA", 1336, "192.168.40.102");
+                    try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+                    succeded = udpSocket.send("RISPOSTA DAL SERVER", 1336, "192.168.40.102");
                     isConnected = true;
                 });
             } else {
@@ -52,7 +57,7 @@ public class UDPServer extends AbstractVerticle{
 			return;
 		}
 		this.rotateCube();
-		System.out.println(succeded.succeeded());
+		//System.out.println(succeded.succeeded());
 		//System.out.println("[UDP] Sending rotation: "+ Float.toString(this.cube.getRotation().getX()) +" to 192.168.40.102");
 		//udpSocket.send(Float.toString(this.cube.getRotation().getX()), 1336, "192.168.40.102");
 	}
@@ -62,7 +67,7 @@ public class UDPServer extends AbstractVerticle{
 		Rotation rotation = new Rotation(0,0,0);
 		Scale scale = new Scale(0.2f, 0.2f, 0.2f);
 		
-		this.cube = new Cube(position, rotation, scale);
+		this.cube = new Cube(0, position, rotation, scale);
 	}
 	
 	private void rotateCube() {

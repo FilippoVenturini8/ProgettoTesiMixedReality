@@ -2,14 +2,21 @@ package model;
 
 public class Cube {
 	
+	private int id;
+	
 	private Position position;
 	private Rotation rotation;
 	private Scale scale;
 	
-	public Cube(Position position, Rotation rotation, Scale scale) {
+	public Cube(int id, Position position, Rotation rotation, Scale scale) {
+		this.id = id;
 		this.position = position;
 		this.rotation = rotation;
 		this.scale = scale;
+	}
+	
+	public int getId() {
+		return this.id;
 	}
 
 	public Position getPosition() {

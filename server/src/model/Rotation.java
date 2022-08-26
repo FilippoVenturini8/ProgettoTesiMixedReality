@@ -36,4 +36,9 @@ public class Rotation {
 		this.z = z;
 	}
 	
+	@Override
+	public String toString() {
+		return ""+x+"|"+y+"|"+z+"";
+	}
+	
 }

@@ -19,7 +19,10 @@ public class TCPClient : MonoBehaviour
 
 	private List<GameObject> cubes = new List<GameObject>();
 	private SetupMessage setupMessage;
-	private Message serverMessage;
+	private UpdateMessage serverMessage;
+
+	private UpdateMessage[] updateMessages;
+
 	private bool rotate = false;
 	private bool create = false;
 
@@ -58,10 +61,10 @@ public class TCPClient : MonoBehaviour
 		}
 
 		if(rotate)
-        {            
-			foreach(GameObject cube in cubes)
-			{
-				cube.transform.Rotate(serverMessage.rotation,0,0);
+        {       
+			//Ciclo sugli updateMessages e in base agli ID si modificano solo i cubi corrispondenti
+			for(int i = 0; i < cubes.Count; i++){
+				cubes[i].transform.Rotate(float.Parse(serverMessage.rotation),0,0);
 			}
             rotate = false;
         }		
@@ -100,8 +103,8 @@ public class TCPClient : MonoBehaviour
 							create = true;
 							firstMsg = false;
 						}else{
-							serverMessage = Message.CreateFromJSON(msgString);	
-
+							//serverMessage = UpdateMessage.CreateFromJSON(msgString);	
+							updateMessages = JsonHelper.FromJson<UpdateMessage>(msgString);
 							rotate = true;
 						}
 						
@@ -156,12 +159,45 @@ public class SetupMessage
 }
 
 [System.Serializable]
-public class Message
+public class UpdateMessage
 {
-    public float rotation;
+	public int cubeID;
+	public string position;
+    public string rotation;
+	public string scale;
+	public string timestamp;
 
-    public static Message CreateFromJSON(string jsonString)
+    public static UpdateMessage CreateFromJSON(string jsonString)
     {
-        return JsonUtility.FromJson<Message>(jsonString);
+        return JsonUtility.FromJson<UpdateMessage>(jsonString);
+    }
+}
+
+public static class JsonHelper
+{
+    public static T[] FromJson<T>(string json)
+    {
+        Wrapper<T> wrapper = JsonUtility.FromJson<Wrapper<T>>(json);
+        return wrapper.Items;
+    }
+
+    public static string ToJson<T>(T[] array)
+    {
+        Wrapper<T> wrapper = new Wrapper<T>();
+        wrapper.Items = array;
+        return JsonUtility.ToJson(wrapper);
+    }
+
+    public static string ToJson<T>(T[] array, bool prettyPrint)
+    {
+        Wrapper<T> wrapper = new Wrapper<T>();
+        wrapper.Items = array;
+        return JsonUtility.ToJson(wrapper, prettyPrint);
+    }
+
+    [Serializable]
+    private class Wrapper<T>
+    {
+        public T[] Items;
     }
 }

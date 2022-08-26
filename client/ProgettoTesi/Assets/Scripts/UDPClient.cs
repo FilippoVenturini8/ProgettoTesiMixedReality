@@ -17,9 +17,9 @@ using System.Threading.Tasks;
 using System.IO;
 using Windows.Networking;
 #endif
-
+/*
 #if !UNITY_EDITOR
-/*public class UDPClient : MonoBehaviour
+public class UDPClient : MonoBehaviour
 {
 
     private string ClientPortNumber = "1336";
@@ -111,10 +111,10 @@ using Windows.Networking;
         newLog = true;
         logMsg = msg;
     }
-}*/
+}
 #endif
 
-
+*/
 
 
 
