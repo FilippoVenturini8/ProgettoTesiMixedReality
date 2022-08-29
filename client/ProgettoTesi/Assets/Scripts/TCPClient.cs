@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Text.RegularExpressions; 
 
 public class TCPClient : MonoBehaviour
 {
@@ -19,7 +20,6 @@ public class TCPClient : MonoBehaviour
 
 	private List<GameObject> cubes = new List<GameObject>();
 	private UpdateMessage[] setupMessages;
-
 	private UpdateMessage[] updateMessages;
 
 	private bool update = false;
@@ -69,6 +69,7 @@ public class TCPClient : MonoBehaviour
 					float.Parse(rotationXYZ[2])
 				);
 			}
+			SendAcknowledge();
             update = false;
         }		
     }
@@ -99,9 +100,10 @@ public class TCPClient : MonoBehaviour
 						Array.Copy(bytes, 0, incommingData, 0, length); 
 
 						string msgString = Encoding.ASCII.GetString(incommingData); 
-						NewLog(msgString);
-						if(msgString[0] != '{'){
-							return;
+						int count = Regex.Matches(msgString, "Items").Count;
+						NewLog(count + " " + msgString);
+						if(count != 1){
+							break;
 						}
 
 						if(firstMsg){
@@ -111,7 +113,6 @@ public class TCPClient : MonoBehaviour
 						}else{	
 							updateMessages = JsonHelper.FromJson<UpdateMessage>(msgString);
 							update = true;
-							SendAcknowledge();
 						}				
 					} 				
 				} 			
