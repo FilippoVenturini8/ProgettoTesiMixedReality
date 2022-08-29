@@ -1,4 +1,5 @@
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,6 +25,11 @@ public class TCPServer extends AbstractVerticle {
 	private static int NUMBER_OF_CUBES = 5;
 	private static float SCALE = 0.2f;
 	
+	private long sendTimestamp;
+	private long receiveTimestamp;
+	
+	private boolean updateSent = false;
+	
 	@Override
     public void start() throws Exception {
 		this.initCubes();
@@ -41,26 +47,45 @@ public class TCPServer extends AbstractVerticle {
 
                     @Override
                     public void handle(Buffer inBuffer) {
-                        System.out.println("Incoming data: " + inBuffer.length());
+                        //System.out.println("Incoming data: " + inBuffer.length());
 
                         String data = inBuffer.getString(0, inBuffer.length());
-
-                        /*Buffer outBuffer = Buffer.buffer();
-                        outBuffer.appendString("Response...");
-
-                        netSocket.write(outBuffer);*/
+                        
+                        System.out.println("Data: " + data);
+                        
+                        if(updateSent) {
+                        	Date date = new Date();
+                        	receiveTimestamp = date.getTime();
+                        	updateSent = false;
+                        	
+                        	long delay = (receiveTimestamp-sendTimestamp)/2;
+                        	
+                        	System.out.println("Send timestamp: " + sendTimestamp + " ms");
+                        	System.out.println("Receive timestamp: " + receiveTimestamp + " ms");
+                        	
+                        	System.out.println("Delay: "+ delay + " ms");
+                        }
+                        
                     }
                 });
                 serverNetSocket = netSocket;
                 
-                JsonObject setupJo = new JsonObject();
-                setupJo.put("scale", SCALE);
-                setupJo.put("numberOfCube", NUMBER_OF_CUBES);
+                JsonArray packetJson = new JsonArray();
+                
+                for(Cube cube : cubes) {
+        			JsonObject cubeJson = new JsonObject();
+        			cubeJson.put("cubeID", cube.getId());
+        			cubeJson.put("position", cube.getPosition().toString());
+        			cubeJson.put("rotation", cube.getRotation().toString());
+        			cubeJson.put("scale", cube.getScale().toString());
+        			packetJson.add(cubeJson);
+        		}
                 
                 Buffer outBuffer = Buffer.buffer();
-                outBuffer.appendString(setupJo.toString());
+                outBuffer.appendString("{\"Items\":" + packetJson.toString() + "}");
+                serverNetSocket.write(outBuffer);
 
-                netSocket.write(outBuffer);
+                System.out.println("[TCP] Sending setup packet to clients");
                 
                 try {
 					Thread.sleep(100);
@@ -80,7 +105,7 @@ public class TCPServer extends AbstractVerticle {
 		}
 		
 		this.rotateCubes();
-		System.out.println("[TCP] Sending rotation: packet to 192.168.40.102");
+		System.out.println("[TCP] Sending update packet to clients");
 		
 		JsonArray packetJson = new JsonArray();
 		
@@ -90,15 +115,16 @@ public class TCPServer extends AbstractVerticle {
 			cubeJson.put("position", cube.getPosition().toString());
 			cubeJson.put("rotation", cube.getRotation().toString());
 			cubeJson.put("scale", cube.getScale().toString());
-			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-			cubeJson.put("timestamp", timestamp.toString());
 			packetJson.add(cubeJson);
 		}
         
         Buffer outBuffer = Buffer.buffer();
         outBuffer.appendString("{\"Items\":" + packetJson.toString() + "}");
-        System.out.println("{\"Items\":" + packetJson.toString() + "}");
         serverNetSocket.write(outBuffer);
+        
+        Date date = new Date();
+        sendTimestamp = date.getTime();
+        updateSent = true;
 	}
 	
 	private void initCubes() {
@@ -111,10 +137,15 @@ public class TCPServer extends AbstractVerticle {
 	}
 	
 	private void rotateCubes() {
-		for(Cube cube : cubes){
-			Rotation oldRotation = cube.getRotation();
-			Rotation newRotation = new Rotation (oldRotation.getX()+DELTA_ROTATION,oldRotation.getY(),oldRotation.getZ());
-			cube.setRotation(newRotation);
+		for(int i=0; i<cubes.size(); i++) {
+			Rotation oldRotation = cubes.get(i).getRotation();
+			Rotation newRotation;
+			if(i%2 == 0) {
+				newRotation = new Rotation (oldRotation.getX()+DELTA_ROTATION,oldRotation.getY(),oldRotation.getZ());
+			}else {
+				newRotation = new Rotation (oldRotation.getX(),oldRotation.getY()+DELTA_ROTATION,oldRotation.getZ());
+			}
+			cubes.get(i).setRotation(newRotation);
 		}
 	}
 }

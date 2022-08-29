@@ -18,12 +18,11 @@ public class TCPClient : MonoBehaviour
     private TextMeshProUGUI debugConsole;
 
 	private List<GameObject> cubes = new List<GameObject>();
-	private SetupMessage setupMessage;
-	private UpdateMessage serverMessage;
+	private UpdateMessage[] setupMessages;
 
 	private UpdateMessage[] updateMessages;
 
-	private bool rotate = false;
+	private bool update = false;
 	private bool create = false;
 
     private bool newLog = false;
@@ -32,7 +31,6 @@ public class TCPClient : MonoBehaviour
 	private bool firstMsg = true;
 	#endregion 
 
-    // Start is called before the first frame update
     void Start()
     {
         debugGameObj = GameObject.Find("DebugTxt");
@@ -40,7 +38,6 @@ public class TCPClient : MonoBehaviour
         ConnectToTcpServer();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if(newLog){
@@ -50,23 +47,29 @@ public class TCPClient : MonoBehaviour
 
 		if(create)
 		{
-			for(int i=0; i < setupMessage.numberOfCube; i++)
-			{
+			for(int i = 0; i < setupMessages.Length; i++){
 				GameObject newCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				newCube.transform.position = new Vector3(0, 0, -(float)i);
-				newCube.transform.localScale = new Vector3(setupMessage.scale, setupMessage.scale, setupMessage.scale);
+				string [] positionXYZ = setupMessages[i].position.Split('|');
+				string [] scaleXYZ = setupMessages[i].scale.Split('|');
+				newCube.transform.position = new Vector3(float.Parse(positionXYZ[0]), float.Parse(positionXYZ[1]), float.Parse(positionXYZ[2]));
+				newCube.transform.localScale = new Vector3(float.Parse(scaleXYZ[0]), float.Parse(scaleXYZ[1]), float.Parse(scaleXYZ[2]));
 				cubes.Add(newCube);
 			}
 			create = false;
 		}
 
-		if(rotate)
-        {       
-			//Ciclo sugli updateMessages e in base agli ID si modificano solo i cubi corrispondenti
-			for(int i = 0; i < cubes.Count; i++){
-				cubes[i].transform.Rotate(float.Parse(serverMessage.rotation),0,0);
+		if(update)
+        {       			
+			for(int i = 0; i < updateMessages.Length; i++){
+				int id = updateMessages[i].cubeID;
+				string [] rotationXYZ = updateMessages[i].rotation.Split('|');
+				cubes[id].transform.eulerAngles = new Vector3(
+					float.Parse(rotationXYZ[0]),
+					float.Parse(rotationXYZ[1]),
+					float.Parse(rotationXYZ[2])
+				);
 			}
-            rotate = false;
+            update = false;
         }		
     }
 
@@ -78,7 +81,7 @@ public class TCPClient : MonoBehaviour
 			clientReceiveThread.Start();  		
 		} 		
 		catch (Exception e) { 			
-			Debug.Log("On client connect exception " + e); 		
+			NewLog("On client connect exception " + e); 		
 		} 	
 	} 
 
@@ -87,56 +90,53 @@ public class TCPClient : MonoBehaviour
 		try { 			
 			socketConnection = new TcpClient("192.168.40.100", 10000);  			
 			Byte[] bytes = new Byte[1024];             
-			while (true) { 				
-				// Get a stream object for reading 				
+			while (true) { 								
 				using (NetworkStream stream = socketConnection.GetStream()) { 					
 					int length; 					
-					// Read incomming stream into byte arrary. 					
+
 					while ((length = stream.Read(bytes, 0, bytes.Length)) != 0) { 						
 						var incommingData = new byte[length]; 						
-						Array.Copy(bytes, 0, incommingData, 0, length); 						
-						// Convert byte array to string message. 						
+						Array.Copy(bytes, 0, incommingData, 0, length); 
+
 						string msgString = Encoding.ASCII.GetString(incommingData); 
 						NewLog(msgString);
+						if(msgString[0] != '{'){
+							return;
+						}
+
 						if(firstMsg){
-							setupMessage = SetupMessage.CreateFromJSON(msgString);
+							setupMessages = JsonHelper.FromJson<UpdateMessage>(msgString);
 							create = true;
 							firstMsg = false;
-						}else{
-							//serverMessage = UpdateMessage.CreateFromJSON(msgString);	
+						}else{	
 							updateMessages = JsonHelper.FromJson<UpdateMessage>(msgString);
-							rotate = true;
-						}
-						
-						Debug.Log("server message received as: " + serverMessage); 					
+							update = true;
+							SendAcknowledge();
+						}				
 					} 				
 				} 			
 			}         
 		}         
 		catch (SocketException socketException) {             
-			Debug.Log("Socket exception: " + socketException);         
+			NewLog("Socket exception: " + socketException);         
 		}     
 	}
 
-    private void SendMessage() 
+    private void SendAcknowledge() 
     {         
 		if (socketConnection == null) {             
 			return;         
 		}  		
-		try { 			
-			// Get a stream object for writing. 			
+		try { 					
 			NetworkStream stream = socketConnection.GetStream(); 			
 			if (stream.CanWrite) {                 
-				string clientMessage = "This is a message from one of your clients."; 				
-				// Convert string message to byte array.                 
-				byte[] clientMessageAsByteArray = Encoding.ASCII.GetBytes(clientMessage); 				
-				// Write byte array to socketConnection stream.                 
-				stream.Write(clientMessageAsByteArray, 0, clientMessageAsByteArray.Length);                 
-				Debug.Log("Client sent his message - should be received by server");             
+				string clientMessage = "ACK"; 
+				byte[] clientMessageAsByteArray = Encoding.ASCII.GetBytes(clientMessage); 
+				stream.Write(clientMessageAsByteArray, 0, clientMessageAsByteArray.Length);        
 			}         
 		} 		
 		catch (SocketException socketException) {             
-			Debug.Log("Socket exception: " + socketException);         
+			NewLog("Socket exception: " + socketException);         
 		}     
 	}
 
@@ -147,25 +147,12 @@ public class TCPClient : MonoBehaviour
 }
 
 [System.Serializable]
-public class SetupMessage
-{
-    public float scale;
-	public int numberOfCube;
-
-    public static SetupMessage CreateFromJSON(string jsonString)
-    {
-        return JsonUtility.FromJson<SetupMessage>(jsonString);
-    }
-}
-
-[System.Serializable]
 public class UpdateMessage
 {
 	public int cubeID;
 	public string position;
     public string rotation;
 	public string scale;
-	public string timestamp;
 
     public static UpdateMessage CreateFromJSON(string jsonString)
     {
