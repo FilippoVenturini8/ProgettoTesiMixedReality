@@ -21,6 +21,7 @@ public class TCPClient : MonoBehaviour
 	private List<GameObject> cubes = new List<GameObject>();
 	private UpdateMessage[] setupMessages;
 	private UpdateMessage[] updateMessages;
+	private Queue<UpdateMessage[]> queue = new Queue<UpdateMessage[]>();
 
 	private bool update = false;
 	private bool create = false;
@@ -59,7 +60,8 @@ public class TCPClient : MonoBehaviour
 		}
 
 		if(update)
-        {       			
+        {   
+			updateMessages = queue.Dequeue();			
 			for(int i = 0; i < updateMessages.Length; i++){
 				int id = updateMessages[i].cubeID;
 				string [] rotationXYZ = updateMessages[i].rotation.Split('|');
@@ -103,7 +105,7 @@ public class TCPClient : MonoBehaviour
 						int count = Regex.Matches(msgString, "Items").Count;
 						NewLog(count + " " + msgString);
 						if(count != 1){
-							break;
+							continue;
 						}
 
 						if(firstMsg){
@@ -111,8 +113,8 @@ public class TCPClient : MonoBehaviour
 							create = true;
 							firstMsg = false;
 						}else{	
-							updateMessages = JsonHelper.FromJson<UpdateMessage>(msgString);
 							update = true;
+							queue.Enqueue(JsonHelper.FromJson<UpdateMessage>(msgString));
 						}				
 					} 				
 				} 			

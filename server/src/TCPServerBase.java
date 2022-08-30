@@ -1,4 +1,3 @@
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,7 +15,7 @@ import model.Position;
 import model.Rotation;
 import model.Scale;
 
-public class TCPServer extends AbstractVerticle {
+public class TCPServerBase extends AbstractVerticle {
 	private NetSocket serverNetSocket;
 	private List<Cube> cubes = new LinkedList<>();
 	private boolean isConnected = false;
@@ -138,6 +137,9 @@ public class TCPServer extends AbstractVerticle {
 	
 	private void rotateCubes() {
 		for(int i=0; i<cubes.size(); i++) {
+			if(i%2 == 0) {
+				continue;
+			}
 			Rotation oldRotation = cubes.get(i).getRotation();
 			Rotation newRotation;
 			if(i%2 == 0) {

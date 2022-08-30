@@ -1,10 +1,7 @@
-/*
- * Data Service as a vertx event-loop 
- */
 public class RunService {
 
 	public static void main(String[] args) throws Exception{		
-		TCPServer tcpServer = new TCPServer();
+		TCPServerBase tcpServer = new TCPServerBase();
 		tcpServer.start();
 		
 		/*UDPServer udpServer = new UDPServer();
