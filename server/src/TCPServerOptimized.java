@@ -15,7 +15,7 @@ import model.Position;
 import model.Rotation;
 import model.Scale;
 
-public class TCPServerOptimized1 extends AbstractVerticle{
+public class TCPServerOptimized extends AbstractVerticle{
 	
 	private NetSocket serverNetSocket;
 	private List<Cube> cubes = new LinkedList<>();
@@ -23,7 +23,7 @@ public class TCPServerOptimized1 extends AbstractVerticle{
 	private boolean isConnected = false;
 	
 	private static float DELTA_ROTATION = 1f;
-	private static int NUMBER_OF_CUBES = 5;
+	private static int NUMBER_OF_CUBES = 10;
 	private static float SCALE = 0.2f;
 	
 	private long sendTimestamp;

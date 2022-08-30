@@ -20,8 +20,8 @@ public class TCPServerBase extends AbstractVerticle {
 	private List<Cube> cubes = new LinkedList<>();
 	private boolean isConnected = false;
 	
-	private static float DELTA_ROTATION = 0.5f;
-	private static int NUMBER_OF_CUBES = 5;
+	private static float DELTA_ROTATION = 2.0f;
+	private static int NUMBER_OF_CUBES = 10;
 	private static float SCALE = 0.2f;
 	
 	private long sendTimestamp;
