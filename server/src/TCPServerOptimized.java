@@ -22,14 +22,13 @@ public class TCPServerOptimized extends AbstractVerticle{
 	private boolean[] toUpdate;
 	private boolean isConnected = false;
 	
-	private static float DELTA_ROTATION = 1f;
-	private static int NUMBER_OF_CUBES = 10;
+	private static float DELTA_ROTATION = 2.0f;
+	private static int NUMBER_OF_CUBES = 20;
 	private static float SCALE = 0.2f;
 	
-	private long sendTimestamp;
 	private long receiveTimestamp;
 	
-	private boolean updateSent = false;
+	private List<Long> allSendTimestamp = new LinkedList<>();
 	
 	@Override
     public void start() throws Exception {
@@ -52,20 +51,22 @@ public class TCPServerOptimized extends AbstractVerticle{
 
                         String data = inBuffer.getString(0, inBuffer.length());
                         
-                        System.out.println("Data: " + data);
+                        //System.out.println("Data: " + data);
                         
-                        if(updateSent) {
-                        	Date date = new Date();
-                        	receiveTimestamp = date.getTime();
-                        	updateSent = false;
-                        	
-                        	long delay = (receiveTimestamp-sendTimestamp)/2;
-                        	
-                        	System.out.println("Send timestamp: " + sendTimestamp + " ms");
-                        	System.out.println("Receive timestamp: " + receiveTimestamp + " ms");
-                        	
-                        	System.out.println("Delay: "+ delay + " ms");
-                        }
+                        Date date = new Date();
+                    	receiveTimestamp = date.getTime();
+                    	
+                    	long sendTimeStamp = allSendTimestamp.get(0);
+                    	
+                    	long delay = (receiveTimestamp-sendTimeStamp)/2;
+                    	
+                    	allSendTimestamp.remove(0);
+                    	
+                    	//System.out.println("Send timestamp: " + sendTimestamp + " ms");
+                    	//System.out.println("Receive timestamp: " + receiveTimestamp + " ms");
+                    	//System.out.println("Delay: "+ delay + " ms");
+                    	
+                    	System.out.print(delay+" ");
                         
                     }
                 });
@@ -106,7 +107,7 @@ public class TCPServerOptimized extends AbstractVerticle{
 		}
 		
 		this.rotateCubes();
-		System.out.println("[TCP] Sending update packet to clients");
+		//System.out.println("[TCP] Sending update packet to clients");
 		
 		JsonArray packetJson = new JsonArray();
 		
@@ -128,8 +129,7 @@ public class TCPServerOptimized extends AbstractVerticle{
         serverNetSocket.write(outBuffer);
         
         Date date = new Date();
-        sendTimestamp = date.getTime();
-        updateSent = true;
+        allSendTimestamp.add(date.getTime());
 	}
 	
 	private void initCubes() {

@@ -92,7 +92,7 @@ public class TCPClient : MonoBehaviour
     { 		
 		try { 			
 			socketConnection = new TcpClient("192.168.40.100", 10000);  			
-			Byte[] bytes = new Byte[1024];             
+			Byte[] bytes = new Byte[4096];             
 			while (true) { 								
 				using (NetworkStream stream = socketConnection.GetStream()) { 					
 					int length; 					
