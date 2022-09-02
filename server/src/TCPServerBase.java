@@ -21,7 +21,7 @@ public class TCPServerBase extends AbstractVerticle {
 	private boolean isConnected = false;
 	
 	private static float DELTA_ROTATION = 2.0f;
-	private static int NUMBER_OF_CUBES = 20;
+	private static int NUMBER_OF_CUBES = 10;
 	private static float SCALE = 0.2f;
 	
 	private long receiveTimestamp;

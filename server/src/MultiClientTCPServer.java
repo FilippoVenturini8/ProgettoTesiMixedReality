@@ -15,12 +15,14 @@ import model.Position;
 import model.Rotation;
 import model.Scale;
 
-public class TCPServerOptimized extends AbstractVerticle{
+public class MultiClientTCPServer extends AbstractVerticle{
 	
 	private NetSocket serverNetSocket;
+	private List<NetSocket> sockets = new LinkedList<>();
 	private List<Cube> cubes = new LinkedList<>();
 	private boolean[] toUpdate;
 	private boolean isConnected = false;
+	private int numberOfConnection = 0;
 	
 	private static float DELTA_ROTATION = 2.0f;
 	private static int NUMBER_OF_CUBES = 5;
@@ -28,7 +30,8 @@ public class TCPServerOptimized extends AbstractVerticle{
 	
 	private long receiveTimestamp;
 	
-	private List<Long> allSendTimestamp = new LinkedList<>();
+	private List<Long> allSendTimestampClient1 = new LinkedList<>();
+	private List<Long> allSendTimestampClient2 = new LinkedList<>();
 	
 	@Override
     public void start() throws Exception {
@@ -42,36 +45,68 @@ public class TCPServerOptimized extends AbstractVerticle{
             @Override
             public void handle(NetSocket netSocket) {
                 System.out.println("Incoming connection!");
-
-                netSocket.handler(new Handler<Buffer>() {
-
-                    @Override
-                    public void handle(Buffer inBuffer) {
-                        //System.out.println("Incoming data: " + inBuffer.length());
-
-                        String data = inBuffer.getString(0, inBuffer.length());
-                        
-                        //System.out.println("Data: " + data);
-                        
-                        Date date = new Date();
-                    	receiveTimestamp = date.getTime();
-                    	
-                    	long sendTimeStamp = allSendTimestamp.get(0);
-                    	
-                    	long delay = (receiveTimestamp-sendTimeStamp)/2;
-                    	
-                    	allSendTimestamp.remove(0);
-                    	
-                    	//System.out.println("Send timestamp: " + sendTimestamp + " ms");
-                    	//System.out.println("Receive timestamp: " + receiveTimestamp + " ms");
-                    	//System.out.println("Delay: "+ delay + " ms");
-                    	
-                    	System.out.print(delay+" ");
-                        
-                    }
-                });
+                numberOfConnection++;
                 
+                if(numberOfConnection == 1) {
+                	netSocket.handler(new Handler<Buffer>() {
+                    	
+                        @Override
+                        public void handle(Buffer inBuffer) {
+                            //System.out.println("Incoming data: " + inBuffer.length());
+
+                            String data = inBuffer.getString(0, inBuffer.length());
+                            
+                            //System.out.println("Data: " + data);
+                            
+                            Date date = new Date();
+                        	receiveTimestamp = date.getTime();
+                        	
+                        	long sendTimeStamp = allSendTimestampClient1.get(0);
+                        	
+                        	long delay = (receiveTimestamp-sendTimeStamp)/2;
+                        	
+                        	allSendTimestampClient1.remove(0);
+                        	
+                        	//System.out.println("1) Send timestamp: " + sendTimeStamp + " ms");
+                        	//System.out.println("1) Receive timestamp: " + receiveTimestamp + " ms");
+                        	//System.out.println("1) Delay: "+ delay + " ms");
+                        	
+                        	System.out.print(delay+" ");
+                            
+                        }
+                    });
+                }else {
+					netSocket.handler(new Handler<Buffer>() {
+                    	
+                        @Override
+                        public void handle(Buffer inBuffer) {
+                            //System.out.println("Incoming data: " + inBuffer.length());
+
+                            String data = inBuffer.getString(0, inBuffer.length());
+                            
+                            //System.out.println("Data: " + data);
+                            
+                            Date date = new Date();
+                        	receiveTimestamp = date.getTime();
+                        	
+                        	long sendTimeStamp = allSendTimestampClient2.get(0);
+                        	
+                        	long delay = (receiveTimestamp-sendTimeStamp)/2;
+                        	
+                        	allSendTimestampClient2.remove(0);
+                        	
+                        	//System.out.println("2) Send timestamp: " + sendTimeStamp + " ms");
+                        	//System.out.println("2) Receive timestamp: " + receiveTimestamp + " ms");
+                        	//System.out.println("2) Delay: "+ delay + " ms");
+                        	
+                        	//System.out.print(delay+" ");
+                            
+                        }
+                    });
+                }
+
                 serverNetSocket = netSocket;
+                sockets.add(netSocket);
                 
                 JsonArray packetJson = new JsonArray();
                 
@@ -128,10 +163,15 @@ public class TCPServerOptimized extends AbstractVerticle{
         Buffer outBuffer = Buffer.buffer();
         outBuffer.appendString("{\"Items\":" + packetJson.toString() + "}");
         
-        serverNetSocket.write(outBuffer);
+        for(NetSocket socket : sockets) {
+        	socket.write(outBuffer);
+        }
         
         Date date = new Date();
-        allSendTimestamp.add(date.getTime());
+        allSendTimestampClient1.add(date.getTime());
+        if(numberOfConnection == 2) {
+            allSendTimestampClient2.add(date.getTime());
+        }
 	}
 	
 	private void initCubes() {
