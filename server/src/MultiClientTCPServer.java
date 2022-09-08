@@ -125,6 +125,13 @@ public class MultiClientTCPServer extends AbstractVerticle{
 
                 System.out.println("[TCP] Sending setup packet to clients");
                 
+                Date date = new Date();
+                if(numberOfConnection == 1) {
+                    allSendTimestampClient1.add(date.getTime());
+                }else {
+                    allSendTimestampClient2.add(date.getTime());
+                }
+                
                 try {
 					Thread.sleep(100);
 					isConnected = true;

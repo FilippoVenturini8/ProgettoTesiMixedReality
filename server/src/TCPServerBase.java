@@ -21,7 +21,7 @@ public class TCPServerBase extends AbstractVerticle {
 	private boolean isConnected = false;
 	
 	private static float DELTA_ROTATION = 2.0f;
-	private static int NUMBER_OF_CUBES = 10;
+	private static int NUMBER_OF_CUBES = 30;
 	private static float SCALE = 0.2f;
 	
 	private long receiveTimestamp;
@@ -84,6 +84,9 @@ public class TCPServerBase extends AbstractVerticle {
                 serverNetSocket.write(outBuffer);
 
                 System.out.println("[TCP] Sending setup packet to clients");
+                
+                Date date = new Date();
+                allSendTimestamp.add(date.getTime());
                 
                 try {
 					Thread.sleep(100);

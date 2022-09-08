@@ -71,7 +71,7 @@ public class TCPClient : MonoBehaviour
 					float.Parse(rotationXYZ[2])
 				);
 			}
-			SendAcknowledge();
+			//SendAcknowledge(); Per misurazioni con tempo di rendering incluso
             update = false;
         }		
     }
@@ -115,7 +115,8 @@ public class TCPClient : MonoBehaviour
 						}else{	
 							update = true;
 							queue.Enqueue(JsonHelper.FromJson<UpdateMessage>(msgString));
-						}				
+						}
+						SendAcknowledge(); //Per misurazioni senza tempo di rendering		
 					} 				
 				} 			
 			}         
